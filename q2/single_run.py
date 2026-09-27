@@ -154,7 +154,6 @@ def build_robdd(pcn_list, var_order, id, UT, CT, T0, T1, counter):
     CT[var][sig] = node
     return node
 
-
 #draw helper functions
 
 def draw_robdd(root, var_order, out_file="robdd.png"):
