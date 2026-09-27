@@ -1,5 +1,4 @@
 #developing in PCN notation
-from math import fabs
 import tree_node as tn
 
 
