@@ -1,0 +1,3 @@
+https://pyeda.readthedocs.io/en/latest/bdd.html
+https://github.com/cjdrake/pyeda/blob/main/pyeda/boolalg/bdd.py
+https://github.com/abhinuvpitale/ROBDD/tree/master
