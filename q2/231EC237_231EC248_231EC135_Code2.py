@@ -1,3 +1,4 @@
+#importing python libraries for generating the robdd
 import networkx as nx
 import matplotlib.pyplot as plt
 
