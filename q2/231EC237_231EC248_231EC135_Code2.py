@@ -1,7 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
-class TreeNode:
+class TreeNode:   #represents node in the robdd, stores its variable, node ID
     def __init__(self, literal, cofactor, cofactor_bar):
         self.literal = literal
         self.cofactor = cofactor
@@ -14,7 +14,7 @@ class TreeNode:
         self.left = None # convention: left 0 right 1
         self.right = None
 
-    def dfs(self, order=None, seen=None):
+    def dfs(self, order=None, seen=None):  #depth first search traversal of the robdd
         if order is None: 
             order = []
         if seen is None: 
@@ -29,7 +29,7 @@ class TreeNode:
             self.right.dfs(order, seen)
         return order
 
-    def bfs(self):
+    def bfs(self):   #breadth first search avoiding repeated nodes
         from collections import deque
         seen, order, q = {self.id}, [self], deque([self])
         while q:
@@ -41,9 +41,7 @@ class TreeNode:
 
     #developing in PCN notation
 
-
-
-def in_order(be_list: list):
+def in_order(be_list: list):  #arranging variables alphabetically 
     # input: Bac + cAb-> output: aBc + Abc
     out=[]
     for i in be_list:
@@ -59,7 +57,7 @@ def in_order(be_list: list):
         out.append(st)
     return out
 
-def cofactor_single(var: str, pcn_list: list):
+def cofactor_single(var: str, pcn_list: list):   #computing cofactors 
     if pcn_list == [1]:
         return [1], [1]
     if pcn_list == [0]:
@@ -83,24 +81,13 @@ def cofactor_single(var: str, pcn_list: list):
     return org, comp
         
 
-def find_order(be_list:list,verbose=False):
-    counts = {}
-    for term in be_list:
-        for ch in term:
-            v = ch.lower()
-            counts[v] = counts.get(v, 0) + 1
-    order = sorted(counts, key=lambda v: counts[v], reverse=True)
-    if verbose:
-        print("variable order = ", order)
-    return order
-
-def var_find(be_list: list):
+def var_find(be_list: list):   #find all distinct variables in the expression
     letters = set()
     for i in be_list:
         letters.update(i.lower())
     return "".join(sorted(letters))
 
-def list_to_pcn(be_list:list):
+def list_to_pcn(be_list:list):   #boolean to PCN notation
     exp=var_find(be_list)
     pcn_list =[]
     literal=""
@@ -119,14 +106,15 @@ def list_to_pcn(be_list:list):
         pcn_list.append(dict_cube)
     return pcn_list
 
-def pcn_signature(pcn_list: list):
+def pcn_signature(pcn_list: list):  #unique signature for a pcn notation
     if pcn_list == [0]: return 0
     if pcn_list == [1]: return 1
     cubes = [tuple(sorted((v, val) for v, val in be.items() if val != 3))
              for be in pcn_list]
     return tuple(sorted(cubes))
 
-
+#recursively build the robdd using the given ordering
+#uses UT and CT for node sharing and reduction
 
 def build_robdd(pcn_list, var_order, id, UT, CT, T0, T1, counter):
     if pcn_list == [0]: 
@@ -157,9 +145,7 @@ def build_robdd(pcn_list, var_order, id, UT, CT, T0, T1, counter):
     CT[var][sig] = node
     return node
 
-
-
-
+#generates and saves the graphical robdd
 
 def draw_robdd(root, var_order, out_file="robdd.png"):
     nodes = root.dfs()
@@ -204,8 +190,6 @@ def draw_robdd(root, var_order, out_file="robdd.png"):
     plt.savefig(out_file, bbox_inches="tight")
     print(f"ROBDD written to {out_file}")
 
-
-
 """
 assumptions:
 1.file input -> one line of text -> one expression 
@@ -215,7 +199,7 @@ assumptions:
 representation: done in PCN 
 
 """
-
+#user inputs
 file_name = input("Enter test  file name: ")
 exp_no = int(input("Enter which expression to convert to ROBDD: "))
 be_split = []
@@ -227,10 +211,11 @@ with open(file_name, 'r') as f:
             be_split = [t.strip() for t in bool_exp.split('+')]
             be_split = in_order(be_split)
 
-# start pre processing
+# start pre processing (variable ordering)
 var_order = input("Enter variable ordering: ").strip().lower()
 var_order = list(var_order)
 
+#check if all variables are there in the ordering given by user
 variables = sorted(set("".join(be_split).lower()))
 
 if sorted(var_order) != variables:
@@ -240,21 +225,28 @@ if sorted(var_order) != variables:
 
 pcn_list = list_to_pcn(be_split)
 
+#create terminal nodes (0 and 1)
 T0 = TreeNode("0", None, None); T0.id = 0
 T1 = TreeNode("1", None, None); T1.id = 1
+
+#initializing UT and CT 
 UT = {v: {} for v in var_order}
 CT = {v: {} for v in var_order}
 counter = [2]
 
+#start the bdd from the root node
 root = build_robdd(pcn_list, var_order, 0, UT, CT, T0, T1, counter)
 
+#displaying the ID, variable and low/high children
 def show(n):
     return f"id={n.id} TERMINAL {n.literal}" if n.left is None else \
            f"id={n.id} var={n.literal} low={n.left.id} high={n.right.id}"
 
+#dfs/bfs traversals
 print("DFS:")
 [print(show(n)) for n in root.dfs()]
 print("BFS:")
 [print(show(n)) for n in root.bfs()]
 
+#generate and save the robdd image
 draw_robdd(root, var_order)
